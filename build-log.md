@@ -50,5 +50,11 @@ This document outlines the step-by-step development process, technical hurdles, 
    - *Fix:* Deleted the branch, navigated directly into the `dist` folder, initialized a temporary Git repo, and force-pushed only the compiled static files to the `gh-pages` branch.
 5. **Launch:** Successfully deployed to `https://syed-ghufran-hassan.github.io/confidential-dice-duel/`.
 
+## Deployment Hurdles:
+
+- I had to add an empty .nojekyll file to the dist folder so GitHub Pages wouldn't try to process the Vite assets with Jekyll (which breaks _assets folders).
+
+- I had to create a dedicated .env.production file so Vite would bake the Sepolia contract address into the production build.
+
 ## 🏆 Final State
 The project is fully functional, verifiable on-chain, and successfully demonstrates how FHEVM can be used to create hidden-information games that are impossible on transparent blockchains.
