@@ -1,0 +1,1 @@
+import{C as e,w as t}from"./index-CnDiXsc5.js";var n=e(((e,t)=>{t.exports={}}));function r(){let e=import.meta.url;return typeof e==`string`&&e.length>0?e:typeof process<`u`&&typeof process.versions?.node==`string`&&typeof __filename==`string`&&typeof t==`function`?n().pathToFileURL(__filename).href:e}var i=r();export{i as wasmBaseUrl};
