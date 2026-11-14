@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // 👈 Added useEffect
 import {
   useAccount,
   useConnect,
@@ -7,6 +7,7 @@ import {
   useWriteContract,
   useSwitchChain,
   useChainId,
+  useWaitForTransactionReceipt,
 } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { useDecryptPublicValues } from "@zama-fhe/react-sdk";
@@ -27,6 +28,8 @@ export default function App() {
   const [opponent, setOpponent] = useState("");
   const [gameId, setGameId] = useState("");
   const [status, setStatus] = useState("");
+  
+  const [settleTxHash, setSettleTxHash] = useState<`0x${string}` | undefined>();
 
   const gameIdBig = gameId && !isNaN(Number(gameId)) && Number(gameId) > 0 
     ? BigInt(gameId) 
@@ -56,18 +59,27 @@ export default function App() {
     query: { enabled: gameIdBig !== undefined && settled === true },
   });
 
-   async function createGame() {
+  // 👈 Fix: Removed the invalid onSuccess from here
+  const { isSuccess: isSettleSuccess } = useWaitForTransactionReceipt({
+    hash: settleTxHash,
+  });
+
+  // 👈 Fix: Use useEffect to watch for the success state
+  useEffect(() => {
+    if (isSettleSuccess) {
+      refetchSettled();
+      setStatus("Settled successfully! Winner revealed.");
+    }
+  }, [isSettleSuccess, refetchSettled]);
+
+  async function createGame() {
     try {
-      // 1. Check if MetaMask is on the correct network (Sepolia)
       if (chainId !== SEPOLIA_CHAIN_ID) {
         setStatus("Switching to Sepolia...");
-        // 2. If not, request a network switch
         await switchChain({ chainId: SEPOLIA_CHAIN_ID });
-        // The page will reload after the switch, and the user can try again.
         return;
       }
 
-      // 3. Proceed with game creation if already on Sepolia
       setStatus("Creating game on Sepolia (this takes ~15 seconds)...");
       await writeContractAsync({
         address: CONTRACT,
@@ -81,18 +93,14 @@ export default function App() {
     }
   }
 
-    async function settle() {
+  async function settle() {
     if (!rolls || !gameId) return;
     try {
       setStatus("Requesting public decryption from Zama Relayer...");
-      const [rollA, rollB] = rolls as [string, string];
+      const [rollA, rollB] = rolls as [`0x${string}`, `0x${string}`];
 
       const result = await decryptPublic.mutateAsync([rollA, rollB]);
       
-      // 👇 Debug log to see exactly what the SDK returned
-      console.log("Zama Relayer Result:", result);
-
-      // Safely extract the values
       const abiEncodedClearValues = result?.abiEncodedClearValues;
       const decryptionProof = result?.decryptionProof;
 
@@ -139,6 +147,7 @@ export default function App() {
   }
 
   const isWrongNetwork = chainId !== SEPOLIA_CHAIN_ID;
+  const winnerAddress = winner as string | undefined;
 
   return (
     <div style={containerStyle}>
@@ -196,11 +205,11 @@ export default function App() {
           </p>
         )}
         
-        {winner && (
+        {winnerAddress && (
           <div style={{ marginTop: 20, padding: 16, background: "#111", borderRadius: 8 }}>
             <h3 style={{ margin: 0, color: "#f97316" }}>Winner</h3>
             <p style={{ fontFamily: "monospace", wordBreak: "break-all" }}>
-              {winner === "0x0000000000000000000000000000000000000000" ? "Draw 🤝" : (winner as string)}
+              {winnerAddress === "0x0000000000000000000000000000000000000000" ? "Draw 🤝" : winnerAddress}
             </p>
           </div>
         )}

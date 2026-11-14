@@ -6,11 +6,9 @@ import { sepolia as sepoliaFhe, type FheChain } from "@zama-fhe/sdk/chains";
 
 const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 
-// 👇 Check if we are running on localhost
 const isLocal = typeof window !== "undefined" && 
   (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
-// Use the proxy locally, but use the direct URL in production
 const RELAYER_URL = isLocal 
   ? `${window.location.origin}/zama-relayer` 
   : "https://relayer.testnet.zama.org";
@@ -31,6 +29,6 @@ export const zamaConfig = createZamaConfig({
   chains: [mySepolia],
   wagmiConfig,
   relayers: {
-    [mySepolia.id]: web({ transport: http(RPC_URL) }),
+    [mySepolia.id]: web(), // 👈 Fixed: Removed the invalid 'transport' option
   },
 });
